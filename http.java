@@ -1,34 +1,81 @@
-import java.io.*; 
-import java.net.*; 
-public class SocketHTTPClient { 
-public static void main(String[] args) { 
-try { 
-// Create a socket to connect to the website 
-Socket socket = new Socket("www.martinbroadhurst.com", 80); 
-// Get the output stream to send request 
-PrintWriter out = new PrintWriter(socket.getOutputStream(), true); 
-// Send an HTTP GET request 
-out.println("GET / HTTP/1.1"); 
-out.println("Host: www.martinbroadhurst.com"); 
-out.println("");  // End of the HTTP request 
-// Get the input stream to read the server's response 
-BufferedReader 
-in 
-InputStreamReader(socket.getInputStream())); 
-// Read and print the server's response 
-String responseLine; 
-= 
-while ((responseLine = in.readLine()) != null) { 
-System.out.println(responseLine); 
-} 
-// Close the streams and socket 
-in.close(); 
-out.close(); 
-socket.close(); 
-} catch (Exception e) { 
-e.printStackTrace(); 
-} 
-} 
-new 
-BufferedReader(new 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
+import java.time.Duration;
+
+public class AdvancedHttpClientExample {
+
+    private static final String BASE_URL = "https://jsonplaceholder.typicode.com";
+
+    public static void main(String[] args) {
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
+
+        // Perform GET request
+        doGetRequest(client);
+
+        // Perform POST request
+        doPostRequest(client);
+    }
+
+    private static void doGetRequest(HttpClient client) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/posts/1"))
+                    .header("Accept", "application/json")
+                    .timeout(Duration.ofSeconds(5))
+                    .GET()
+                    .build();
+
+            System.out.println("Sending GET request...");
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("GET Response Status Code: " + response.statusCode());
+            System.out.println("GET Response Body:");
+            System.out.println(response.body());
+            System.out.println("-------------------------------------------------\n");
+
+        } catch (HttpTimeoutException e) {
+            System.err.println("GET request timed out");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void doPostRequest(HttpClient client) {
+        try {
+            String jsonPayload = """
+                    {
+                        "title": "foo",
+                        "body": "bar",
+                        "userId": 1
+                    }
+                    """;
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/posts"))
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .timeout(Duration.ofSeconds(5))
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
+
+            System.out.println("Sending POST request...");
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("POST Response Status Code: " + response.statusCode());
+            System.out.println("POST Response Body:");
+            System.out.println(response.body());
+            System.out.println("-------------------------------------------------\n");
+
+        } catch (HttpTimeoutException e) {
+            System.err.println("POST request timed out");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
+
