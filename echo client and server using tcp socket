@@ -1,3 +1,4 @@
+// EchoServer.java
 import java.io.*;
 import java.net.*;
 
@@ -12,6 +13,7 @@ public class EchoServer {
                 Socket clientSocket = serverSocket.accept(); // Accept client connection
                 System.out.println("Client connected: " + clientSocket.getInetAddress());
 
+                // Handle client in a separate thread or sequentially
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
@@ -26,6 +28,42 @@ public class EchoServer {
 
                 clientSocket.close();
                 System.out.println("Client disconnected.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+// EchoClient.java
+import java.io.*;
+import java.net.*;
+
+public class EchoClient {
+    public static void main(String[] args) {
+        String host = "localhost"; // or use IP like "127.0.0.1"
+        int port = 1234;
+
+        try (Socket socket = new Socket(host, port)) {
+            System.out.println("Connected to Echo Server");
+
+            BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+            String message;
+            while (true) {
+                System.out.print("Enter message (type 'exit' to quit): ");
+                message = userInput.readLine();
+                out.println(message); // Send to server
+
+                String response = in.readLine(); // Read echoed message
+                System.out.println("Server replied: " + response);
+
+                if ("exit".equalsIgnoreCase(message)) {
+                    break;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
